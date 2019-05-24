@@ -14,6 +14,12 @@
           v-on:pot-method="potionMethod"
         />
         <NextDungeon v-if="showNext" v-on:next-dungeon="nextDungeon" :monster="monster"/>
+        <ResetGame
+          v-if="shouldResetGame"
+          v-on:reset-game="resetGame"
+          :monster="monster"
+          :hero="hero"
+        />
       </div>
     </div>
   </div>
@@ -24,6 +30,7 @@ import Header from "./components/Header";
 import Monster from "./components/Monster";
 import Hero from "./components/Hero";
 import NextDungeon from "./components/NextDungeon";
+import ResetGame from "./components/ResetGame";
 
 export default {
   name: "app",
@@ -32,12 +39,14 @@ export default {
       msg: "Dungeon Floor",
       combatLog: [],
       showNext: false,
+      shouldResetGame: false,
       monster: { level: 1, name: "Logash", maxHP: 100, currentHP: 100 },
       hero: {
         level: 1,
         name: "Spicy P",
         maxHP: 100,
         currentHP: 100,
+        defense: 10,
         potions: 5
       }
     };
@@ -46,44 +55,49 @@ export default {
     Header,
     Monster,
     Hero,
-    NextDungeon
+    NextDungeon,
+    ResetGame
   },
   methods: {
     monsterAttack() {
-      const monsterAtt = 7;
+      const monsterAtt = this.calcDmg(7, 13);
       this.hero.currentHP -= monsterAtt;
       return monsterAtt;
     },
     attackMethod() {
-      this.monster.currentHP = this.monster.currentHP - 10;
+      const heroAtt = this.calcDmg(6, 14);
+      this.monster.currentHP = this.monster.currentHP - heroAtt;
       this.monsterAttack();
-      this.combatLog.push("You attacked for 10 Hit Points");
+      this.combatLog.push(`You attacked for ${heroAtt} Hit Points`);
       this.checkWin();
     },
     spattackMethod() {
-      this.monster.currentHP = this.monster.currentHP - 20;
+      const spAtt = this.calcDmg(15, 25);
+      this.monster.currentHP = this.monster.currentHP - spAtt;
       this.monsterAttack();
       this.combatLog.push(
-        "You attacked for 20 Hit Points. You can't use this move for 3 turns"
+        `You attacked for ${spAtt} Hit Points. You can't use this move for 3 turns`
       );
       this.checkWin();
     },
     defendMethod() {
       const monsterAtt = this.monsterAttack();
-      this.hero.currentHP += 5;
+      this.hero.currentHP += monsterAtt - this.hero.defense;
       this.combatLog.push(
-        `You blocked the incoming attack, but this took ${monsterAtt} hitpoint of damage`
+        `You blocked the incoming attack, but this took ${monsterAtt -
+          this.hero.defense} hitpoint of damage`
       );
     },
     potionMethod() {
+      const heroPotion = this.calcDmg(12, 18);
       if (this.hero.potions >= 1) {
         if (this.hero.currentHP >= 100) {
           return;
         }
         if (this.hero.currentHP < 100) {
-          this.hero.currentHP += 8;
+          this.hero.currentHP += heroPotion;
           this.combatLog.push(
-            `You healed for 8 Hit Points, ${this.hero.potions}`
+            `You healed for ${heroPotion} Hit Points, ${this.hero.potions}`
           );
           this.hero.potions -= 1;
           this.monsterAttack();
@@ -92,9 +106,9 @@ export default {
         this.combatLog.push("You have no remaining potions");
         return;
       }
+      this.checkWin();
     },
     checkWin() {
-      console.log("yo");
       if (this.monster.currentHP <= 0) {
         this.showNext = !this.showNext;
         this.newMonster = { ...this.monster };
@@ -102,15 +116,41 @@ export default {
         this.newMonster.maxHP += 20;
         this.newMonster.currentHP = this.newMonster.maxHP;
         this.monster = this.newMonster;
+        this.lvldHero = { ...this.hero };
+        this.lvldHero.maxHP += 10;
+        this.lvldHero.currentHP += 5;
+      }
+      if (this.hero.currentHP <= 0) {
+        this.shouldResetGame = !this.shouldResetGame;
       }
     },
     nextDungeon() {
       this.showNext = !this.showNext;
       this.monster.name = "The Boss";
+    },
+    resetGame() {
+      this.shouldResetGame = !this.shouldResetGame;
+      this.newMonster = { ...this.monster };
+      this.newMonster.level = 1;
+      this.newMonster.maxHP = 100;
+      this.newMonster.currentHP = this.newMonster.maxHP;
+      this.monster = this.newMonster;
+      this.newHero = { ...this.hero };
+      this.newHero.maxHP = 100;
+      this.newHero.currentHP = this.newHero.maxHP;
+      this.hero = this.newHero;
+    },
+    calcDmg(min, max) {
+      return Math.max(Math.floor(Math.random() * max) + 1, min);
     }
   },
   computed: {
     nextLvl() {
+      if (this.monster.currentHP === 0) {
+        return alert("You did it!");
+      }
+    },
+    lvlUp() {
       if (this.monster.currentHP === 0) {
         return alert("You did it!");
       }

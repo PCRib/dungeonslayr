@@ -1,42 +1,15 @@
 <template>
   <div class="background">
     <div class="nextDungeon">
-      <p>{{monster.name}} Was Defeated!</p>
-      <p>Enjoy your choice of loot</p>
-      <LootTable
-        v-on:toggle-btn="resetGame"
-        v-bind:key="index"
-        v-for="(loot, index) in lootTable"
-        :loot="loot"
-      />
-      <button class="btn btn-next" :disabled="!!loot" @click="$emit('next-dungeon')">Continue?</button>
+      <button class="btn btn-next" @click="$emit('reset-game')">Play Again?</button>
     </div>
   </div>
 </template>
- 
+
 <script>
-import LootTable from "./LootTable";
 export default {
-  name: "NextDungeon",
-  props: ["monster"],
-  components: {
-    LootTable
-  },
-  methods: {
-    resetGame() {
-      console.log("hey");
-    }
-  },
-  data() {
-    return {
-      loot: true,
-      lootTable: [
-        { name: "The Black Sword of Death", id: 1, atkBonus: 5 },
-        { name: "The Babbling Book of Ilya", id: 2, spatkBonus: 10 },
-        { name: "The Gleeming Shield of Misshinney", id: 3, defBonus: 20 }
-      ]
-    };
-  }
+  name: "ResetGame",
+  props: ["monster", "hero"]
 };
 </script>
 
